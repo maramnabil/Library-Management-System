@@ -280,6 +280,7 @@ void Viewbooklist::on_comboBox_gserach_currentTextChanged(const QString &arg1)
 }
 void Viewbooklist::recieveCombo(){
     QString chosen_genre = ui->comboBox_gserach->currentText();
+    QString searchedTxt = ui->lineEdit->text();
     QString database_path= QCoreApplication::applicationDirPath() + "/library_system.db";
         myDB = QSqlDatabase::addDatabase("QSQLITE");
         myDB.setDatabaseName(database_path);
@@ -289,20 +290,94 @@ void Viewbooklist::recieveCombo(){
         QSqlQueryModel *modal = new QSqlQueryModel();
         QSqlQuery *qry = new QSqlQuery(myDB);
 
-    if (chosen_genre=="All"){
-        qry->prepare("SELECT * from books");
+        if (chosen_genre == "All") {
+            if (searchedTxt.isEmpty()) {
+                qry->prepare("select * from books");
+                qry->exec();
+                modal->setQuery(*qry);
+                ui->tableView->setModel(modal);
+                myDB.close();
+            } else {
+                qry->prepare("select * from books where lower(book_title) like '%" + searchedTxt.toLower() + "%' order by case when lower(book_title) = '" + searchedTxt.toLower() + "' then 1 when lower(book_title) like '" + searchedTxt + "' then 2 else 4 end");
+                qry->exec();
+                modal->setQuery(*qry);
+                ui->tableView->setModel(modal);
+                myDB.close();
+            }
+        } else {
+            if (searchedTxt.isEmpty()) {
+                qry->prepare("select * from books where genre = '" + chosen_genre + "'");
+                qry->exec();
+                modal->setQuery(*qry);
+                ui->tableView->setModel(modal);
+                myDB.close();
+            } else {
+                qry->prepare("select * from books where lower(book_title) like '%" + searchedTxt.toLower() + "%' and genre = '" + chosen_genre + "' order by case when lower(book_title) = '" + searchedTxt.toLower() + "' then 1 when lower(book_title) like '" + searchedTxt + "' then 2 else 4 end");
+                qry->exec();
+                modal->setQuery(*qry);
+                ui->tableView->setModel(modal);
+                myDB.close();
+            }
+        }
+
+//    if (chosen_genre=="All"){
+//        qry->prepare("SELECT * from books");
+//        qry->exec();
+//        modal->setQuery(*qry);
+//        ui->tableView->setModel(modal);
+
+//        myDB.close();
+//    }
+//    else{
+
+//        qry->prepare("SELECT * from books WHERE genre='"+chosen_genre+"'");
+//        qry->exec();
+//        modal->setQuery(*qry);
+//        ui->tableView->setModel(modal);
+//        myDB.close();
+//    }
+}
+
+void Viewbooklist::on_lineEdit_textEdited(const QString &arg1)
+{
+    QString chosen_genre = ui->comboBox_gserach->currentText();
+    QString searchedTxt = ui->lineEdit->text();
+    QString database_path= QCoreApplication::applicationDirPath() + "/library_system.db";
+    myDB = QSqlDatabase::addDatabase("QSQLITE");
+    myDB.setDatabaseName(database_path);
+    if(!myDB.open()){
+         QMessageBox::warning(this,"Problem in database", "Failed to open the database.");
+    }
+    QSqlQueryModel *modal = new QSqlQueryModel();
+    QSqlQuery *qry = new QSqlQuery(myDB);
+
+    if (searchedTxt.isEmpty() && chosen_genre == "All") {
+        qry->prepare("select * from books");
         qry->exec();
         modal->setQuery(*qry);
         ui->tableView->setModel(modal);
-
         myDB.close();
     }
-    else{
-
-        qry->prepare("SELECT * from books WHERE genre='"+chosen_genre+"'");
+    else if (searchedTxt.isEmpty()) {
+        qry->prepare("select * from books where genre = '" + chosen_genre + "'");
+        qry->exec();
+        modal->setQuery(*qry);
+        ui->tableView->setModel(modal);
+        myDB.close();
+    }
+    else if (chosen_genre == "All") {
+        qry->prepare("select * from books where lower(book_title) like '%" + searchedTxt.toLower() + "%' order by case when lower(book_title) = '" + searchedTxt.toLower() + "' then 1 when lower(book_title) like '" + searchedTxt + "' then 2 else 4 end");
+        qry->exec();
+        modal->setQuery(*qry);
+        ui->tableView->setModel(modal);
+        myDB.close();
+    }
+    else {
+        qry->prepare("select * from books where lower(book_title) like '%" + searchedTxt.toLower() + "%' and genre = '" + chosen_genre + "' order by case when lower(book_title) = '" + searchedTxt.toLower() + "' then 1 when lower(book_title) like '" + searchedTxt + "' then 2 else 4 end");
         qry->exec();
         modal->setQuery(*qry);
         ui->tableView->setModel(modal);
         myDB.close();
     }
 }
+
