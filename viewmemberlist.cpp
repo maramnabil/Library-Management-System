@@ -20,7 +20,8 @@ Viewmemberlist::Viewmemberlist(QWidget *parent) :
     }
     QSqlQueryModel *modal = new QSqlQueryModel();
     QSqlQuery *qry = new QSqlQuery(myDB);
-    qry->prepare("SELECT * from members");
+    qry->prepare("SELECT member_id, member_name,member_phone,sub_startDate, sub_endDate,"
+                 "Cast ((JULIANDAY(sub_endDate)-JULIANDAY('now')) As Integer)+1 AS sub_daysLeft FROM members");
     qry->exec();
     modal->setQuery(*qry);
     ui->tableView->setModel(modal);
@@ -51,8 +52,14 @@ void Viewmemberlist::on_tableView_clicked(const QModelIndex &index)
 {
     select_delete_member = true;
      select_edit_member = true;
+     if (index.column() == 5){
+     val2 = ui->tableView->model()->index(index.row(),1).data().toString();
+         return;
+     }
     //bookno = ui->tableView->model()->index();
     val2 = ui->tableView->model()->data(index).toString();
+
+
 }
 
 
@@ -121,6 +128,7 @@ void Viewmemberlist::on_pushButton_editMember_clicked()
          sl.append(qry.value(2).toString());
          sl.append(qry.value(3).toString());
          sl.append(qry.value(4).toString());
+         sl.append(qry.value(5).toString());
 
 
      }
@@ -146,10 +154,12 @@ void Viewmemberlist::on_pushButton_refresh_clicked()
     }
     QSqlQueryModel *modal = new QSqlQueryModel();
     QSqlQuery *qry = new QSqlQuery(myDB);
-    qry->prepare("SELECT * from members");
+    qry->prepare("SELECT member_id, member_name,member_phone,sub_startDate, sub_endDate,"
+                 "Cast ((JULIANDAY(sub_endDate)-JULIANDAY('now')) As Integer)+1 AS sub_daysLeft FROM members");
     qry->exec();
     modal->setQuery(*qry);
     ui->tableView->setModel(modal);
     myDB.close();
 }
+
 
